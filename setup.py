@@ -316,7 +316,7 @@ def collect_llm_api_keys():
                     for i, model in enumerate(model_aliases['OPENROUTER'], 1):
                         print(f"{Colors.CYAN}[{i}] {Colors.GREEN}{model}{Colors.ENDC}")
                     
-                    model_choice = input("Select default model (1-3) or press Enter for gemini-2.5-flash: ").strip()
+                    model_choice = input("Select default model (1-3) or press Enter for gemini-2.5-flash-preview: ").strip()
                     if not model_choice or model_choice == '1':
                         model_info['default_model'] = 'openrouter/google/gemini-2.5-flash-preview'
                     elif model_choice.isdigit() and 1 <= int(model_choice) <= len(model_aliases['OPENROUTER']):
@@ -385,7 +385,7 @@ def collect_rapidapi_keys():
     print_info("Each service requires individual activation in your RapidAPI account:")
     print_info("1. Locate the service's `base_url` in its corresponding file (e.g., https://linkedin-data-scraper.p.rapidapi.com in backend/agent/tools/data_providers/LinkedinProvider.py)")
     print_info("2. Visit that specific API on the RapidAPI marketplace")
-    print_info("3. Subscribe to th`e service (many offer free tiers with limited requests)")
+    print_info("3. Subscribe to the service (many offer free tiers with limited requests)")
     print_info("4. Once subscribed, the service will be available to your agent through the API Services tool")
     print_info("A RapidAPI key is optional for API services like LinkedIn")
     print_info("Visit https://rapidapi.com/ to get your API key if needed")

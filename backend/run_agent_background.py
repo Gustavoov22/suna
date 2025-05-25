@@ -10,7 +10,6 @@ import dramatiq
 import uuid
 from agentpress.thread_manager import ThreadManager
 from services.supabase import DBConnection
-from services import redis
 from dramatiq.brokers.rabbitmq import RabbitmqBroker
 import os
 
@@ -89,9 +88,9 @@ async def run_agent_background(
                         break
                 # Periodically refresh the active run key TTL
                 if total_responses % 50 == 0: # Refresh every 50 responses or so
-                    try: await redis.expire(instance_active_key, redis.REDIS_KEY_TTL)
+                    try: await redis.expire(instance_active_key, 3600) # 1 hour TTL
                     except Exception as ttl_err: logger.warning(f"Failed to refresh TTL for {instance_active_key}: {ttl_err}")
-                await asyncio.sleep(0.1) # Short sleep to prevent tight loop
+                await asyncio.sleep(0.5) # Increased sleep to reduce CPU usage
         except asyncio.CancelledError:
             logger.info(f"Stop signal checker cancelled for {agent_run_id} (Instance: {instance_id})")
         except Exception as e:
@@ -198,6 +197,7 @@ async def run_agent_background(
             await redis.publish(global_control_channel, "ERROR")
             logger.debug(f"Published ERROR signal to {global_control_channel}")
         except Exception as e:
+            logger.warning(f"Failed to publish ERROR signal: {str(e)}")
             logger.warning(f"Failed to publish ERROR signal: {str(e)}")
 
     finally:

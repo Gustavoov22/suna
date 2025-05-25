@@ -14,7 +14,7 @@ def check_docker_compose_up():
 def main():
     force = False
     if "--help" in sys.argv:
-        print("Usage: ./script.py [OPTION]")
+        print("Usage: ./start.py [OPTION]")
         print("Manage docker-compose services interactively")
         print("\nOptions:")
         print("  -f\tForce start containers without confirmation")
