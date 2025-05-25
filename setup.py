@@ -271,7 +271,7 @@ def collect_llm_api_keys():
                     for i, model in enumerate(model_aliases['OPENAI'], 1):
                         print(f"{Colors.CYAN}[{i}] {Colors.GREEN}{model}{Colors.ENDC}")
                     
-                    model_choice = input("Select default model (1-4) or press Enter for gpt-4o: ").strip()
+                    model_choice = input("Select default model (1-2) or press Enter for gpt-4o: ").strip()
                     if not model_choice:
                         model_info['default_model'] = 'openai/gpt-4o'
                     elif model_choice.isdigit() and 1 <= int(model_choice) <= len(model_aliases['OPENAI']):
@@ -293,7 +293,7 @@ def collect_llm_api_keys():
                     for i, model in enumerate(model_aliases['ANTHROPIC'], 1):
                         print(f"{Colors.CYAN}[{i}] {Colors.GREEN}{model}{Colors.ENDC}")
                     
-                    model_choice = input("Select default model (1-3) or press Enter for claude-3-7-sonnet: ").strip()
+                    model_choice = input("Select default model (1-2) or press Enter for claude-3-7-sonnet: ").strip()
                     if not model_choice or model_choice == '1':
                         model_info['default_model'] = 'anthropic/claude-3-7-sonnet-latest'
                     elif model_choice.isdigit() and 1 <= int(model_choice) <= len(model_aliases['ANTHROPIC']):
@@ -316,14 +316,14 @@ def collect_llm_api_keys():
                     for i, model in enumerate(model_aliases['OPENROUTER'], 1):
                         print(f"{Colors.CYAN}[{i}] {Colors.GREEN}{model}{Colors.ENDC}")
                     
-                    model_choice = input("Select default model (1-3) or press Enter for gemini-2.5-flash-preview: ").strip()
+                    model_choice = input("Select default model (1-3) or press Enter for gemini-2.5-pro-preview: ").strip()
                     if not model_choice or model_choice == '1':
-                        model_info['default_model'] = 'openrouter/google/gemini-2.5-flash-preview'
+                        model_info['default_model'] = 'openrouter/google/gemini-2.5-pro-preview'
                     elif model_choice.isdigit() and 1 <= int(model_choice) <= len(model_aliases['OPENROUTER']):
                         model_info['default_model'] = model_aliases['OPENROUTER'][int(model_choice) - 1]
                     else:
-                        model_info['default_model'] = 'openrouter/google/gemini-2.5-flash-preview'
-                        print_warning(f"Invalid selection, using default: openrouter/google/gemini-2.5-flash-preview")
+                        model_info['default_model'] = 'openrouter/google/gemini-2.5-pro-preview'
+                        print_warning(f"Invalid selection, using default: openrouter/google/gemini-2.5-pro-preview")
                     break
                 print_error("Invalid API key format. It should be at least 10 characters long.")
         
@@ -334,7 +334,7 @@ def collect_llm_api_keys():
         elif 'OPENAI_API_KEY' in api_keys:
             model_info['default_model'] = 'openai/gpt-4o'
         elif 'OPENROUTER_API_KEY' in api_keys:
-            model_info['default_model'] = 'openrouter/google/gemini-2.5-flash-preview'
+            model_info['default_model'] = 'openrouter/google/gemini-2.5-pro-preview'
     
     print_success(f"Using {model_info['default_model']} as the default model")
     
@@ -570,6 +570,11 @@ def setup_supabase():
                     if line.startswith('SUPABASE_URL='):
                         supabase_url = line.strip().split('=', 1)[1]
                         break
+    
+    if not supabase_url:
+        print_error("Supabase URL not found in environment or .env file")
+        print_info("Please run the setup from the beginning to configure Supabase properly")
+        sys.exit(1)
 
     project_ref = None
     if supabase_url:
@@ -787,12 +792,12 @@ def final_instructions(use_docker=True, env_vars=None):
         print(f"{Colors.CYAN}    cd backend")
         print(f"    poetry run python3.11 api.py{Colors.ENDC}")
         
-        print_info("3. In one more terminal:")
+        print_info("4. In one more terminal:")
         print(f"{Colors.CYAN}    cd backend")
         print(f"    poetry run python3.11 -m dramatiq run_agent_background{Colors.ENDC}")
         
-        print_info("4. Once all services are running, access Suna at: http://localhost:3000")
-        print_info("5. Create an account using Supabase authentication to start using Suna")
+        print_info("5. Once all services are running, access Suna at: http://localhost:3000")
+        print_info("6. Create an account using Supabase authentication to start using Suna")
 
 def main():
     total_steps = 8  # Reduced by 1 since we're skipping the clone step

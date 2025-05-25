@@ -33,7 +33,15 @@ async def initialize():
     if not instance_id:
         # Generate instance ID
         instance_id = str(uuid.uuid4())[:8]
-    await redis.initialize_async()
+    
+    try:
+        await redis.initialize_async()
+        logger.info("Redis connection initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize Redis connection: {e}")
+        # Raise the exception as Redis is critical for the worker
+        raise
+        
     await db.initialize()
     thread_manager = ThreadManager()
 

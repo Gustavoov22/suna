@@ -4,12 +4,16 @@ import subprocess
 import sys
 
 def check_docker_compose_up():
-    result = subprocess.run(
-        ["docker", "compose", "ps", "-q"],
-        capture_output=True,
-        text=True
-    )
-    return len(result.stdout.strip()) > 0
+    try:
+        result = subprocess.run(
+            ["docker", "compose", "ps", "-q"],
+            capture_output=True,
+            text=True
+        )
+        return len(result.stdout.strip()) > 0
+    except (subprocess.SubprocessError, FileNotFoundError):
+        print("Error: Unable to run docker compose command. Make sure Docker and docker compose are installed.")
+        sys.exit(1)
 
 def main():
     force = False

@@ -87,6 +87,20 @@ async def get_client():
     return client
 
 
+async def is_connected() -> bool:
+    """Check if Redis is connected and operational."""
+    global client, _initialized
+    if client is None or not _initialized:
+        return False
+    
+    try:
+        await client.ping()
+        return True
+    except Exception as e:
+        logger.warning(f"Redis connection check failed: {e}")
+        return False
+
+
 # Basic Redis operations
 async def set(key: str, value: str, ex: int = None):
     """Set a Redis key."""
