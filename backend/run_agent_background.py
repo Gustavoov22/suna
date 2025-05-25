@@ -158,8 +158,15 @@ async def run_agent_background(
              await redis.publish(response_channel, "new") # Notify about the completion message
 
         # Fetch final responses from Redis for DB update
-        all_responses_json = await redis.lrange(response_list_key, 0, -1)
-        all_responses = [json.loads(r) for r in all_responses_json]
+        all_responses = []
+        try:
+            all_responses_json = await redis.lrange(response_list_key, 0, -1)
+            all_responses = [json.loads(r) for r in all_responses_json]
+            logger.debug(f"Retrieved {len(all_responses)} responses from Redis for agent run {agent_run_id}")
+        except Exception as e:
+            logger.error(f"Failed to retrieve responses from Redis for agent run {agent_run_id}: {e}")
+            # Create a minimal response if we couldn't get the real ones
+            all_responses = [{"type": "status", "status": final_status, "message": "Failed to retrieve full response history"}]
 
         # Update DB status
         await update_agent_run_status(client, agent_run_id, final_status, error=error_message, responses=all_responses)
@@ -205,7 +212,6 @@ async def run_agent_background(
             await redis.publish(global_control_channel, "ERROR")
             logger.debug(f"Published ERROR signal to {global_control_channel}")
         except Exception as e:
-            logger.warning(f"Failed to publish ERROR signal: {str(e)}")
             logger.warning(f"Failed to publish ERROR signal: {str(e)}")
 
     finally:

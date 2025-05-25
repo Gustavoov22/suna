@@ -71,16 +71,25 @@ class ThreadManager:
                       Defaults to None, stored as an empty JSONB object if None.
         """
         logger.debug(f"Adding message of type '{type}' to thread {thread_id}")
-        client = await self.db.client
+        
+        try:
+            client = await self.db.client
+        except Exception as e:
+            logger.error(f"Failed to get database client: {str(e)}", exc_info=True)
+            raise
 
         # Prepare data for insertion
-        data_to_insert = {
-            'thread_id': thread_id,
-            'type': type,
-            'content': json.dumps(content) if isinstance(content, (dict, list)) else content,
-            'is_llm_message': is_llm_message,
-            'metadata': json.dumps(metadata or {}), # Ensure metadata is always a JSON object
-        }
+        try:
+            data_to_insert = {
+                'thread_id': thread_id,
+                'type': type,
+                'content': json.dumps(content) if isinstance(content, (dict, list)) else content,
+                'is_llm_message': is_llm_message,
+                'metadata': json.dumps(metadata or {}), # Ensure metadata is always a JSON object
+            }
+        except Exception as e:
+            logger.error(f"Failed to prepare message data: {str(e)}", exc_info=True)
+            raise
 
         try:
             # Add returning='representation' to get the inserted row data including the id
@@ -196,6 +205,10 @@ class ThreadManager:
         # Log model info
         logger.info(f"🤖 Thread {thread_id}: Using model {llm_model}")
 
+        # Initialize processor_config if it's None
+        if processor_config is None:
+            processor_config = ProcessorConfig()
+            
         # Apply max_xml_tool_calls if specified and not already set in config
         if max_xml_tool_calls > 0 and not processor_config.max_xml_tool_calls:
             processor_config.max_xml_tool_calls = max_xml_tool_calls
@@ -268,24 +281,24 @@ Here are the XML tools available with examples:
                     token_threshold = self.context_manager.token_threshold
                     logger.info(f"Thread {thread_id} token count: {token_count}/{token_threshold} ({(token_count/token_threshold)*100:.1f}%)")
 
-                    # if token_count >= token_threshold and enable_context_manager:
-                    #     logger.info(f"Thread token count ({token_count}) exceeds threshold ({token_threshold}), summarizing...")
-                    #     summarized = await self.context_manager.check_and_summarize_if_needed(
-                    #         thread_id=thread_id,
-                    #         add_message_callback=self.add_message,
-                    #         model=llm_model,
-                    #         force=True
-                    #     )
-                    #     if summarized:
-                    #         logger.info("Summarization complete, fetching updated messages with summary")
-                    #         messages = await self.get_llm_messages(thread_id)
-                    #         # Recount tokens after summarization, using the modified prompt
-                    #         new_token_count = token_counter(model=llm_model, messages=[working_system_prompt] + messages)
-                    #         logger.info(f"After summarization: token count reduced from {token_count} to {new_token_count}")
-                    #     else:
-                    #         logger.warning("Summarization failed or wasn't needed - proceeding with original messages")
-                    # elif not enable_context_manager:
-                    #     logger.info("Automatic summarization disabled. Skipping token count check and summarization.")
+                    if token_count >= token_threshold and enable_context_manager:
+                        logger.info(f"Thread token count ({token_count}) exceeds threshold ({token_threshold}), summarizing...")
+                        summarized = await self.context_manager.check_and_summarize_if_needed(
+                            thread_id=thread_id,
+                            add_message_callback=self.add_message,
+                            model=llm_model,
+                            force=True
+                        )
+                        if summarized:
+                            logger.info("Summarization complete, fetching updated messages with summary")
+                            messages = await self.get_llm_messages(thread_id)
+                            # Recount tokens after summarization, using the modified prompt
+                            new_token_count = token_counter(model=llm_model, messages=[working_system_prompt] + messages)
+                            logger.info(f"After summarization: token count reduced from {token_count} to {new_token_count}")
+                        else:
+                            logger.warning("Summarization failed or wasn't needed - proceeding with original messages")
+                    elif not enable_context_manager:
+                        logger.info("Automatic summarization disabled. Skipping token count check and summarization.")
 
                 except Exception as e:
                     logger.error(f"Error counting tokens or summarizing: {str(e)}")
@@ -328,7 +341,7 @@ Here are the XML tools available with examples:
                         temperature=llm_temperature,
                         max_tokens=llm_max_tokens,
                         tools=openapi_tool_schemas,
-                        tool_choice=tool_choice if processor_config.native_tool_calling else None,
+                        tool_choice=tool_choice if openapi_tool_schemas else None,
                         stream=stream,
                         enable_thinking=enable_thinking,
                         reasoning_effort=reasoning_effort

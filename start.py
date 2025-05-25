@@ -11,8 +11,8 @@ def check_docker_compose_up():
             text=True
         )
         return len(result.stdout.strip()) > 0
-    except (subprocess.SubprocessError, FileNotFoundError):
-        print("Error: Unable to run docker compose command. Make sure Docker and docker compose are installed.")
+    except (subprocess.SubprocessError, FileNotFoundError) as e:
+        print(f"Error: Unable to run docker compose command: {str(e)}. Make sure Docker and docker compose are installed.")
         sys.exit(1)
 
 def main():
